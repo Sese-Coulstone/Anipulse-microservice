@@ -2,6 +2,25 @@ spring:
   application:
     name: api-gateway
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${ISSUER_URI}
+          jwk-set-uri: ${JWK_URI}
+      client:
+        registration:
+          keycloak:
+            client-id: anipulse-admin
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            scope: openid, profile, email
+        provider:
+          keycloak:
+            issuer-uri: ${ISSUER_URI}
+            user-name-attribute: anipulse
+
+
   cloud:
     gateway:
       routes:
@@ -9,12 +28,36 @@ spring:
           uri: lb://USER-SERVICE
           predicates:
             - Path=/api/users/**
+          filters:
+            - TokenRelay=
+
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:5173"  # Frontend URL
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
 
 
 server:
-  port: 8080
+  port: 9000
 
 eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.cloud.gateway: DEBUG

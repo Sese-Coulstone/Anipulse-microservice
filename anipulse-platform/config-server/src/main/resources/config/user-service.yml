@@ -7,13 +7,41 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
     database: mysql
     database-platform: org.hibernate.dialect.MySQL8Dialect
+
+  # Security Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${ISSUER_URI}
+          jwk-set-uri: ${JWK_URI}
+
+# Keycloak Configuration
+keycloak:
+  realm: anipulse
+  auth-server-url: http://localhost:8080
+  admin-client-id: anipulse-admin
+  admin-client-secret: ${KEYCLOAK_CLIENT_SECRET}
+
+# Brevo Email Configuration
+brevo:
+  api-key: ${BREVO_API_KEY}
+  api-url: https://api.brevo.com/v3
+  sender-email: ${MAIL_FROM}
+  sender-name: Anipulse
+
+# Application Configuration
+app:
+  frontend-url: ${FRONTEND_URL}
+  activation-token-expiry: 86400000  # 24 hours in milliseconds
+
 server:
   port: 8081
   servlet:
