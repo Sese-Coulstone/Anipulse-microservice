@@ -13,9 +13,12 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class AuthResponse {
-    private UUID userId;
+    private String userId;
+    private String keycloakId;
     private String username;
     private String email;
+    private Boolean isActive;
+    private Boolean emailVerified;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

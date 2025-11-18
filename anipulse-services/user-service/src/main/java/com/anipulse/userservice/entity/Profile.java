@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -19,16 +18,36 @@ import java.util.UUID;
 public class Profile {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private String id;
+
+    @Column(unique = true)
+    private String keycloakId;
 
     private String username;
+
     @Column(unique = true)
     private String email;
-    private String password;
+
+    @Column(nullable = false)
+    private Boolean isActive;
+
+    @Column(nullable = false)
+    private Boolean emailVerified;
 
     @Column(updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
+
     @CreationTimestamp
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    private void prePersist() {
+        if (isActive == null) {
+            isActive = false;
+        }
+        if (emailVerified == null) {
+            emailVerified = false;
+        }
+    }
 }
