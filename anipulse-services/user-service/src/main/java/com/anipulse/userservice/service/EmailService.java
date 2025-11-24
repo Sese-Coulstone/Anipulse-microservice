@@ -49,6 +49,24 @@ public class EmailService {
         sendEmail(emailPayload);
     }
 
+    public void sendPasswordResetEmail(String toEmail, String username, String resetToken) {
+        String resetLink = frontendUrl + "/reset-password?token=" + resetToken;
+
+        Map<String, Object> emailPayload = Map.of(
+                "sender", Map.of(
+                        "email", senderEmail,
+                        "name", senderName
+                ),
+                "to", new Object[]{
+                        Map.of("email", toEmail, "name", username)
+                },
+                "subject", "Reset Your Anipulse Password",
+                "htmlContent", buildPasswordResetEmailTemplate(username, resetLink)
+        );
+
+        sendEmail(emailPayload);
+    }
+
     private void sendEmail(Map<String, Object> emailPayload) {
         WebClient webClient = webClientBuilder
                 .baseUrl(apiUrl)

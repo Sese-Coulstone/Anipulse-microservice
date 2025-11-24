@@ -294,4 +294,33 @@ public class KeycloakService {
             throw new RuntimeException("Error fixing user account: " + e.getMessage());
         }
     }
+
+    /**
+     * Reset user password in Keycloak
+     */
+    public void resetPassword(String email, String newPassword) {
+        try {
+            RealmResource realmResource = keycloak.realm(realm);
+            List<UserRepresentation> users = realmResource.users().searchByEmail(email, true);
+
+            if (users.isEmpty()) {
+                throw new RuntimeException("User not found with email: " + email);
+            }
+
+            UserRepresentation user = users.get(0);
+            UserResource userResource = realmResource.users().get(user.getId());
+
+            // Create new password credential
+            CredentialRepresentation credential = createPasswordCredential(newPassword);
+            
+            // Reset the password
+            userResource.resetPassword(credential);
+            
+            log.info("Password reset successfully for user: {}", email);
+
+        } catch (Exception e) {
+            log.error("Error resetting password for user {}: {}", email, e.getMessage(), e);
+            throw new RuntimeException("Error resetting password: " + e.getMessage());
+        }
+    }
 }

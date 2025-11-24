@@ -104,4 +104,36 @@ public class ProfileController {
             ));
         }
     }
+
+    @PostMapping("/password-reset/request")
+    public ResponseEntity<Map<String, Object>> requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
+        try {
+            profileService.requestPasswordReset(request.getEmail());
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Password reset email sent. Please check your email for instructions."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/password-reset/confirm")
+    public ResponseEntity<Map<String, Object>> confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
+        try {
+            profileService.confirmPasswordReset(request.getToken(), request.getNewPassword());
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Password reset successfully. You can now login with your new password."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        }
+    }
 }

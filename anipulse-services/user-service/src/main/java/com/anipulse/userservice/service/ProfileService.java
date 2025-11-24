@@ -5,8 +5,10 @@ import com.anipulse.userservice.dto.AuthResponse;
 import com.anipulse.userservice.dto.LoginRequest;
 import com.anipulse.userservice.dto.LoginResponse;
 import com.anipulse.userservice.entity.ActivationToken;
+import com.anipulse.userservice.entity.PasswordResetToken;
 import com.anipulse.userservice.entity.Profile;
 import com.anipulse.userservice.repository.ActivationTokenRepository;
+import com.anipulse.userservice.repository.PasswordResetTokenRepository;
 import com.anipulse.userservice.repository.ProfileRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class ProfileService {
     private final ProfileRepository repository;
     private final KeycloakService keycloakService;
     private final ActivationTokenRepository activationTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
 
     @Value("${app.activation-token-expiry}")
@@ -239,6 +242,85 @@ public class ProfileService {
                 .build();
 
         activationTokenRepository.save(activationToken);
+        return token;
+    }
+
+    /**
+     * Request password reset - sends email with reset token
+     */
+    @Transactional
+    public void requestPasswordReset(String email) {
+        try {
+            // Check if user exists in database
+            Profile profile = repository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+            // Check if user exists in Keycloak
+            if (!keycloakService.userExistsInKeycloak(email)) {
+                throw new RuntimeException("User not found in authentication system");
+            }
+
+            // Generate password reset token
+            String resetToken = generatePasswordResetToken(email);
+
+            // Send password reset email
+            emailService.sendPasswordResetEmail(email, profile.getUsername(), resetToken);
+
+            log.info("Password reset email sent to: {}", email);
+
+        } catch (Exception e) {
+            log.error("Error requesting password reset for {}: {}", email, e.getMessage(), e);
+            throw new RuntimeException("Error requesting password reset: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Confirm password reset - validates token and resets password
+     */
+    @Transactional
+    public void confirmPasswordReset(String token, String newPassword) {
+        try {
+            // Validate token
+            PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                    .orElseThrow(() -> new RuntimeException("Invalid or expired reset token"));
+
+            if (resetToken.getUsed()) {
+                throw new RuntimeException("Reset token has already been used");
+            }
+
+            if (resetToken.isExpired()) {
+                throw new RuntimeException("Reset token has expired");
+            }
+
+            // Reset password in Keycloak
+            keycloakService.resetPassword(resetToken.getEmail(), newPassword);
+
+            // Mark token as used
+            resetToken.setUsed(true);
+            passwordResetTokenRepository.save(resetToken);
+
+            log.info("Password reset successfully for user: {}", resetToken.getEmail());
+
+        } catch (Exception e) {
+            log.error("Error confirming password reset: {}", e.getMessage(), e);
+            throw new RuntimeException("Error resetting password: " + e.getMessage());
+        }
+    }
+
+    private String generatePasswordResetToken(String email) {
+        String token = UUID.randomUUID().toString();
+
+        // Convert milliseconds to hours (reuse activation token expiry)
+        long expiryHours = activationTokenExpiryMillis / (1000 * 60 * 60);
+
+        PasswordResetToken resetToken = PasswordResetToken.builder()
+                .token(token)
+                .email(email)
+                .expiryDate(LocalDateTime.now().plusHours(expiryHours))
+                .used(false)
+                .build();
+
+        passwordResetTokenRepository.save(resetToken);
         return token;
     }
 }
