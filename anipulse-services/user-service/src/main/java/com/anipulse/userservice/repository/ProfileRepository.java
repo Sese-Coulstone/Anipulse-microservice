@@ -13,4 +13,6 @@ public interface ProfileRepository extends JpaRepository<Profile, String> {
     Optional<Profile> findByEmail(String email);
     Boolean existsByEmail(String email);
     Optional<Profile> findByKeycloakId(String keycloakId);
+
+    Optional<Profile> findByUsername(String username);
 }
