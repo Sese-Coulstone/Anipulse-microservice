@@ -21,14 +21,16 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${ISSUER_URI}
-          jwk-set-uri: ${JWK_URI}
 
 # Keycloak Configuration
 keycloak:
   realm: anipulse
   auth-server-url: http://localhost:8080
   admin-client-id: anipulse-admin
-  admin-client-secret: ${KEYCLOAK_CLIENT_SECRET}
+  admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+  resource-client-id: anipulse-client
+  resource-client-secret: ${KEYCLOAK_RESOURCE_CLIENT_SECRET}
+  token-uri: ${keycloak.auth-server-url}/realms/${keycloak.realm}/protocol/openid-connect/token
 
 # Brevo Email Configuration
 brevo:
