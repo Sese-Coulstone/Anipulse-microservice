@@ -1,72 +1,95 @@
 package com.anipulse.apigateway.config;
 
+import com.anipulse.sharedservice.security.KeycloakRealmRoleConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import reactor.core.publisher.Mono;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
-
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
-    private String jwkSetUri;
+    private String jwkUri;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
     
     @Bean
     public ReactiveJwtDecoder jwtDecoder() {
-        return NimbusReactiveJwtDecoder.withJwkSetUri(jwkSetUri).build();
+        return NimbusReactiveJwtDecoder.withJwkSetUri(jwkUri).build();
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
+        jwtConverter.setJwtGrantedAuthoritiesConverter(new KeycloakRealmRoleConverter());
+        return jwtConverter;
     }
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .authorizeExchange(auth -> auth
+                .authorizeExchange(exchanges -> exchanges
                         // Public endpoints
-                        .pathMatchers(HttpMethod.POST, "/api/users/register").permitAll()
-                        .pathMatchers(HttpMethod.POST, "/api/users/login").permitAll()
-                        .pathMatchers(HttpMethod.GET, "/api/users/activate/**").permitAll()
-                        .pathMatchers(HttpMethod.POST, "/api/users/verify-otp").permitAll()
-                        .pathMatchers(HttpMethod.POST, "/api/users/resend-activation").permitAll()
-                        .pathMatchers(HttpMethod.POST, "/api/users/forgot-password").permitAll()
-                        .pathMatchers(HttpMethod.POST, "/api/users/reset-password").permitAll()
-                        .pathMatchers("/actuator/health").permitAll()
-                        .pathMatchers("/eureka/**").permitAll()
+                        .pathMatchers("/actuator/health",
+                                "/eureka/**").permitAll()
 
+                        //User Service Public Endpoints
+                        .pathMatchers("/api/users/register",
+                                "/api/users/login",
+                                "/api/users/activate/**",
+                                "/api/users/verify-otp",
+                                "/api/users/fix-account/**",
+                                "/api/users/resend-activation",
+                                "/api/users/forgot-password",
+                                "/api/users/reset-password").permitAll()
                         // All other endpoints require authentication
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oAuth2 -> oAuth2
-                        .jwt(jwtSpec -> {})
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(reactiveJwtAuthenticationConverter()))
                 )
-                // Stateless authentication - no sessions needed for JWT
+                // Stateless authentication
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // Frontend URL
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedOrigins(List.of(frontendUrl)); // Frontend URL
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        configuration.setExposedHeaders(List.of("Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public Converter<Jwt, ? extends Mono<? extends AbstractAuthenticationToken>> reactiveJwtAuthenticationConverter() {
+        return new ReactiveJwtAuthenticationConverterAdapter(jwtAuthenticationConverter());
     }
 }
