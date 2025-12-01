@@ -1,0 +1,74 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+
+  # Redis Configuration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+#      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000 # 1 hour in milliseconds
+
+# Feign Client Configuration
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+        loggerLevel: full
+      USER-SERVICE:
+        connectTimeout: 5000
+        readTimeout: 10000
+  circuitbreaker:
+    enabled: true
+    alphanumeric-ids:
+      enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.anipulse.animeservice.client.UserServiceClient: DEBUG
+
+server:
+  port: 8082
+  servlet:
+    context-path: /api/anime
+
+app:
+  jikan:
+    base-url: https://api.jikan.moe/v4
+    timeout: 5000
+    retryAttempts: 3
+    rateLimitDelay: 1000  #Jikan has rate limits
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
