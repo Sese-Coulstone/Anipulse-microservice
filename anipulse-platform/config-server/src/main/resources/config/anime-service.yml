@@ -64,9 +64,30 @@ server:
 app:
   jikan:
     base-url: https://api.jikan.moe/v4
-    timeout: 5000
     retryAttempts: 3
     rateLimitDelay: 1000  #Jikan has rate limits
+    cacheExpiration: 3600000  # 1 hour in milliseconds
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      jikan-api:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30000
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+  retry:
+    instances:
+      jikan-api:
+        maxAttempts: 3
+        waitDuration: 2000
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException.TooManyRequests
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - java.net.ConnectException
 
 eureka:
   client:
