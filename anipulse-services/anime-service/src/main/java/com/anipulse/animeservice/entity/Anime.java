@@ -50,7 +50,6 @@ public class Anime {
 
     private Integer episodes;
 
-    @Column(columnDefinition = "DOUBLE")
     private Double score;
 
     @Column(name = "scored_by")

@@ -7,7 +7,6 @@ import com.anipulse.animeservice.entity.AnimeGenre;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -31,8 +30,12 @@ public class AnimeMapper {
                 .build();
 
         if (jikanData.getAired() != null) {
-            anime.setAiredFrom(jikanData.getAired().getFrom().toLocalDate());
-            anime.setAiredTo(jikanData.getAired().getTo().toLocalDate());
+            if (jikanData.getAired().getFrom() != null) {
+                anime.setAiredFrom(jikanData.getAired().getFrom().toLocalDate());
+            }
+            if (jikanData.getAired().getTo() != null) {
+                anime.setAiredTo(jikanData.getAired().getTo().toLocalDate());
+            }
         }
 
         if (jikanData.getImages() != null && jikanData.getImages().getJpg() != null) {
@@ -110,8 +113,12 @@ public class AnimeMapper {
                 .popularity(jikanData.getPopularity());
 
         if (jikanData.getAired() != null) {
-            builder.airedFrom(jikanData.getAired().getFrom().toLocalDate())
-                    .airedTo(jikanData.getAired().getTo().toLocalDate());
+            if (jikanData.getAired().getFrom() != null) {
+                builder.airedFrom(jikanData.getAired().getFrom().toLocalDate());
+            }
+            if (jikanData.getAired().getTo() != null) {
+                builder.airedTo(jikanData.getAired().getTo().toLocalDate());
+            }
         }
 
         if (jikanData.getImages() != null && jikanData.getImages().getJpg() != null) {

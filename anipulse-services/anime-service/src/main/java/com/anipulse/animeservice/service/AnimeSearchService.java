@@ -41,22 +41,6 @@ public class AnimeSearchService {
     public AnimeDTO getAnimeByMalId(Long malId) throws InterruptedException {
         log.info("Fetching anime with MAL ID: {}", malId);
 
-        // Check database first
-        Optional<Anime> existingAnime = animeRepository.findByMalId(malId);
-
-        if (existingAnime.isPresent()) {
-            Anime anime = existingAnime.get();
-
-            // Check if data is stale (older than 7 days)
-            if (anime.getLastSyncedAt().isAfter(LocalDateTime.now().minusDays(7))) {
-                log.info("Returning cached anime from database: {}", malId);
-                return animeMapper.entityToDTO(anime);
-            } else {
-                log.info("Anime data is stale, refreshing from JIKAN: {}", malId);
-                return refreshAnimeData(anime);
-            }
-        }
-
         // Fetch from JIKAN if not in database
         return fetchAndPersistAnime(malId);
     }
@@ -144,9 +128,6 @@ public class AnimeSearchService {
         // Process genres
         Set<AnimeGenre> genres = processGenres(response.getData().getGenres());
         anime.setGenres(genres);
-
-        anime = animeRepository.save(anime);
-        log.info("Persisted new anime to database: {}", malId);
 
         return animeMapper.entityToDTO(anime);
     }
