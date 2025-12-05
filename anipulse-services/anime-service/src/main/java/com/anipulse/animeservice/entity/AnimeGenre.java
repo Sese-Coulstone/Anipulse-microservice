@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Entity representing anime genres
@@ -18,9 +16,8 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "tbl_genre", indexes = {
-    @Index(name = "idx_mal_genre_id", columnList = "malGenreId"),
-    @Index(name = "idx_genre_name", columnList = "name")
+@Table(name = "genre", indexes = {
+        @Index(name = "idx_mal_genre_id", columnList = "mal_genre_id", unique = true)
 })
 public class AnimeGenre {
 
@@ -31,21 +28,12 @@ public class AnimeGenre {
     /**
      * Genre ID from MyAnimeList/JIKAN API
      */
-    @Column(unique = true, nullable = false)
-    private Integer malGenreId;
+    @Column(name = "mal_genre_id", nullable = false, unique = true)
+    private Long malGenreId;
 
-    @Column(unique = true, nullable = false, length = 100)
+    @Column(nullable = false)
     private String name;
 
-    @ManyToMany(mappedBy = "genres", fetch = FetchType.LAZY)
-    @Builder.Default
-    private Set<Anime> animes = new HashSet<>();
-
-    /**
-     * Constructor for creating genre with just name and MAL ID
-     */
-    public AnimeGenre(Integer malGenreId, String name) {
-        this.malGenreId = malGenreId;
-        this.name = name;
-    }
+    @Column(length = 50)
+    private String type; // genre, theme, demographic
 }

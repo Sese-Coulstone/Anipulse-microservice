@@ -64,6 +64,13 @@ public class CacheConfig {
         cacheConfigurations.put("seasonalAnime",
                 defaultConfig.entryTtl(Duration.ofHours(12)));
 
+        // Add user-specific caches
+        cacheConfigurations.put("user-profiles",
+                defaultConfig.entryTtl(Duration.ofHours(1)));
+
+        cacheConfigurations.put("user-anime-lists",
+                defaultConfig.entryTtl(Duration.ofMinutes(30)));
+
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(cacheConfigurations)

@@ -22,11 +22,10 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "tbl_anime", indexes = {
-    @Index(name = "idx_mal_id", columnList = "malId"),
-    @Index(name = "idx_title", columnList = "title"),
-    @Index(name = "idx_type", columnList = "type"),
-    @Index(name = "idx_score", columnList = "score")
+@Table(name = "anime", indexes = {
+        @Index(name = "idx_mal_id", columnList = "mal_id", unique = true),
+        @Index(name = "idx_title", columnList = "title"),
+        @Index(name = "idx_score", columnList = "score")
 })
 public class Anime {
 
@@ -37,31 +36,25 @@ public class Anime {
     /**
      * MyAnimeList ID - unique identifier from JIKAN API
      */
-    @Column(unique = true, nullable = false)
+    @Column(name = "mal_id", unique = true, nullable = false)
     private Long malId;
 
     @Column(nullable = false, length = 500)
     private String title;
 
+    @Column(name = "title_english", length = 500)
+    private String titleEnglish;
+
     @Column(columnDefinition = "TEXT")
     private String synopsis;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-        name = "tbl_anime_genre",
-        joinColumns = @JoinColumn(name = "anime_id"),
-        inverseJoinColumns = @JoinColumn(name = "genre_id")
-    )
-    @Builder.Default
-    private Set<AnimeGenre> genres = new HashSet<>();
-
     private Integer episodes;
 
-    @Column(precision = 3, scale = 2)
+    @Column(columnDefinition = "DOUBLE")
     private Double score;
 
-    @Column(length = 1000)
-    private String imageUrl;
+    @Column(name = "scored_by")
+    private Integer scoredBy;
 
     /**
      * Type: TV, Movie, OVA, Special, ONA, Music
@@ -75,30 +68,46 @@ public class Anime {
     @Column(length = 50)
     private String status;
 
+    @Column(name = "aired_from")
     private LocalDate airedFrom;
 
+    @Column(name = "aired_to")
     private LocalDate airedTo;
 
-    /**
-     * Number of users who have this anime in their list (for popularity ranking)
-     */
-    private Integer members;
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
 
     /**
      * Content rating: G, PG, PG-13, R, R+, Rx
      */
-    @Column(length = 10)
+    @Column(length = 50)
     private String rating;
 
-    @Column(updatable = false)
+    @Column(name = "anime_rank")
+    private Integer animeRank;
+
+    private Integer popularity;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "anime_genre",
+            joinColumns = @JoinColumn(name = "anime_id"),
+            inverseJoinColumns = @JoinColumn(name = "genre_id")
+    )
+    @Builder.Default
+    private Set<AnimeGenre> genres = new HashSet<>();
+
     @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     /**
      * Last time data was synced from JIKAN API
      */
+    @Column(name = "last_synced_at")
     private LocalDateTime lastSyncedAt;
 }

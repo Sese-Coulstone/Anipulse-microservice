@@ -35,6 +35,13 @@ spring:
     redis:
       time-to-live: 3600000 # 1 hour in milliseconds
 
+  # Security Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${ISSUER_URI}
+
 # Feign Client Configuration
 feign:
   client:

@@ -18,7 +18,7 @@ public interface AnimeGenreRepository extends JpaRepository<AnimeGenre, Long> {
      * @param malGenreId the MAL genre ID
      * @return Optional containing the genre if found
      */
-    Optional<AnimeGenre> findByMalGenreId(Integer malGenreId);
+    Optional<AnimeGenre> findByMalGenreId(Long malGenreId);
     
     /**
      * Find genre by name
@@ -32,7 +32,7 @@ public interface AnimeGenreRepository extends JpaRepository<AnimeGenre, Long> {
      * @param malGenreId the MAL genre ID
      * @return true if genre exists
      */
-    boolean existsByMalGenreId(Integer malGenreId);
+    boolean existsByMalGenreId(Long malGenreId);
     
     /**
      * Check if genre exists by name

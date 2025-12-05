@@ -65,7 +65,7 @@ public class UserAnimeList {
     /**
      * User's rating (1.0 to 10.0, nullable if not rated yet)
      */
-    @Column(precision = 3, scale = 1)
+    @Column
     private Double rating;
 
     /**

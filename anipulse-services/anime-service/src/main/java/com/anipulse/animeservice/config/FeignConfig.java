@@ -3,6 +3,7 @@ package com.anipulse.animeservice.config;
 import feign.RequestInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -12,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 public class FeignConfig {
 
     @Bean
+    @Scope("prototype")
     public RequestInterceptor requestInterceptor() {
         return requestTemplate -> {
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();

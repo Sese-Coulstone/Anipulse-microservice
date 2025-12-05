@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "USER-SERVICE", fallbackFactory = UserServiceClientFallback.class)
 public interface UserServiceClient {
-    @GetMapping("/{email}")
+    @GetMapping("/api/users/{email}")
     ResponseEntity<AuthResponse> getUserProfile(@PathVariable String email);
 }

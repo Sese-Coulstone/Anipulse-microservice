@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @Data
 public class JikanProperties {
     private String baseUrl;
-    private int retryAttempts;
-    private int rateLimitDelay;
+    private Integer rateLimitDelay;
+    private Integer retryAttempts;
     private Long cacheExpiration;
 }
