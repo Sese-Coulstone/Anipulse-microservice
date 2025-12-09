@@ -34,17 +34,23 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/top").permitAll()
                         .requestMatchers(HttpMethod.GET, "/seasonal/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/ratings/anime/{animeId}").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/ratings/anime/{animeId}/average").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/ratings/anime/{animeId}/stats").permitAll()
 
-                        // Actuator endpoints (if any)
+                        // Actuator endpoints
                         .requestMatchers("/actuator/**").permitAll()
                         
                         // User-specific endpoints require authentication
                         .requestMatchers("/my-list/**").authenticated()
-                        .requestMatchers("/ratings/**").authenticated()
 
-                        // Recommendation data endpoints (can be restricted to recommendation-service)
-                        .requestMatchers("/recommendation-data/**").authenticated()
+                        // PROTECTED: User's rating endpoints
+                        .requestMatchers(HttpMethod.POST, "/ratings").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/ratings/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/ratings/my-rating/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/ratings/my-ratings").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/ratings/anime/{animeId}/exists").authenticated()
+
+                        // PROTECTED: Recommendation data endpoints (for recommendation-service)
+                        .requestMatchers("/recommendation-data/**").hasRole("SERVICE")
                         
                         // All other requests require authentication
                         .anyRequest().authenticated()
