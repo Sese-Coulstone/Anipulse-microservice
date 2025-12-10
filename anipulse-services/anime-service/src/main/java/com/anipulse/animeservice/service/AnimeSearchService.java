@@ -116,6 +116,13 @@ public class AnimeSearchService {
 
     @Transactional
     protected AnimeDTO fetchAndPersistAnime(Long malId) throws InterruptedException {
+        // Check if anime already exists in database
+        Optional<Anime> existingAnime = animeRepository.findByMalId(malId);
+        if (existingAnime.isPresent()) {
+            log.info("Anime {} already exists in database", malId);
+            return animeMapper.entityToDTO(existingAnime.get());
+        }
+
         JikanAnimeResponse response = jikanApiClient.getAnimeById(malId)
                 .block();
 
@@ -128,6 +135,10 @@ public class AnimeSearchService {
         // Process genres
         Set<AnimeGenre> genres = processGenres(response.getData().getGenres());
         anime.setGenres(genres);
+
+        // Save anime to database
+        anime = animeRepository.save(anime);
+        log.info("Saved new anime {} to database with ID: {}", malId, anime.getId());
 
         return animeMapper.entityToDTO(anime);
     }

@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserAnimeListRequestDTO {
 
-    @NotNull(message = "Anime ID is required")
-    private Long animeId;
+    @NotNull(message = "MAL ID is required")
+    private Long malId;
 
     @NotNull(message = "Watch status is required")
     private WatchStatus watchStatus;

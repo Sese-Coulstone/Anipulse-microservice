@@ -35,14 +35,16 @@ public class UserAnimeListService {
     @CacheEvict(value = "userAnimeList", key = "#userId")
     public UserAnimeListDTO createOrUpdateAnime(String userId,
                                                 UserAnimeListRequestDTO request) {
-        log.info("Adding/updating anime {} for user {}", request.getAnimeId(), userId);
-        ensureAnimeExists(request.getAnimeId());
+        log.info("Adding/updating anime (MAL ID: {}) for user {}", request.getMalId(), userId);
+
+        // Ensure anime exists and get the database ID
+        Long animeDbId = ensureAnimeExists(request.getMalId());
 
         UserAnimeList entry = userAnimeListRepository
-                .findByUserIdAndAnimeId(userId, request.getAnimeId())
+                .findByUserIdAndAnimeId(userId, animeDbId)
                 .orElse(UserAnimeList.builder()
                         .userId(userId)
-                        .animeId(request.getAnimeId())
+                        .animeId(animeDbId)
                         .build());
 
         // Update fields
@@ -57,7 +59,7 @@ public class UserAnimeListService {
         }
 
         entry = userAnimeListRepository.save(entry);
-        log.info("Added anime {} for user {}", request.getAnimeId(), userId);
+        log.info("Added anime (DB ID: {}) for user {}", animeDbId, userId);
         return mapper.toDTO(entry);
     }
 
@@ -139,17 +141,35 @@ public class UserAnimeListService {
     }
 
 
-     // Ensure anime exists (create minimal entry if needed for FK constraint)
-    private void ensureAnimeExists(Long animeId) {
-        if (!animeRepository.existsByMalId(animeId)) {
-            try {
-                // It will also ensure the anime is cached
-                animeSearchService.getAnimeByMalId(animeId);
-            } catch (Exception e) {
-                log.error("Failed to fetch anime {}: {}", animeId, e.getMessage());
-                throw new RuntimeException("Anime not found: " + animeId);
-            }
+    /**
+     * Ensure anime exists in database and return its database ID
+     * @param malId MyAnimeList ID
+     * @return database ID of the anime
+     */
+    private Long ensureAnimeExists(Long malId) {
+        // Check if anime already exists
+        return animeRepository.findByMalId(malId)
+                .map(anime -> {
+                    log.debug("Anime with MAL ID {} found with database ID {}", malId, anime.getId());
+                    return anime.getId();
+                })
+                .orElseGet(() -> {
+                    // Fetch from JIKAN API and save to database
+                    try {
+                        log.info("Anime with MAL ID {} not found, fetching from API...", malId);
+                        animeSearchService.getAnimeByMalId(malId);
 
-        }
+                        // Retrieve the saved anime to get its database ID
+                        return animeRepository.findByMalId(malId)
+                                .map(anime -> {
+                                    log.info("Anime {} successfully saved with database ID {}", malId, anime.getId());
+                                    return anime.getId();
+                                })
+                                .orElseThrow(() -> new RuntimeException("Failed to save anime: " + malId));
+                    } catch (Exception e) {
+                        log.error("Failed to fetch anime {}: {}", malId, e.getMessage(), e);
+                        throw new RuntimeException("Anime not found or could not be fetched: " + malId, e);
+                    }
+                });
     }
 }
