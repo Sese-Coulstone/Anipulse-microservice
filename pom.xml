@@ -33,6 +33,7 @@
         <module>anipulse-platform/api-gateway</module>
         <module>anipulse-services/user-service</module>
         <module>anipulse-services/anime-service</module>
+        <module>anipulse-services/recommendation-service</module>
         <module>anipulse-shared/shared-service</module>
     </modules>
 
