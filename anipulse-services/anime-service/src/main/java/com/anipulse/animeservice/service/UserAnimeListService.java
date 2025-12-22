@@ -10,6 +10,9 @@ import com.anipulse.animeservice.repository.AnimeRepository;
 import com.anipulse.animeservice.repository.UserAnimeListRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -29,6 +32,13 @@ public class UserAnimeListService {
     private final AnimeRepository animeRepository;
     private final UserAnimeListMapper mapper;
     private final AnimeSearchService animeSearchService;
+    private final RabbitTemplate rabbitTemplate;
+
+    @Value("${rabbitmq.exchange.name}")
+    private String exchange;
+
+    @Value("${rabbitmq.routing.key}")
+    private String routingKey;
 
     // Add anime to user's list or update existing entry
     @Transactional
@@ -56,6 +66,12 @@ public class UserAnimeListService {
         // Set completed date if status is COMPLETED
         if (request.getWatchStatus() == WatchStatus.COMPLETED && entry.getCompletedAt() == null) {
             entry.setCompletedAt(LocalDateTime.now());
+        }
+
+        try {
+            rabbitTemplate.convertAndSend(exchange, routingKey, entry);
+        } catch (AmqpException e) {
+            throw new RuntimeException("Failed to send message to RabbitMQ", e);
         }
 
         entry = userAnimeListRepository.save(entry);

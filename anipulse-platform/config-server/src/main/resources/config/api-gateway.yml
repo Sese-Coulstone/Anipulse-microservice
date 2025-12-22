@@ -19,6 +19,11 @@ spring:
           predicates:
             - Path=/api/anime/**
 
+        - id: recommendation-service
+          uri: lb://RECOMMENDATION-SERVICE
+          predicates:
+            - Path=/api/recommendation/**
+
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 

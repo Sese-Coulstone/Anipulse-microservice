@@ -75,6 +75,14 @@ app:
     rateLimitDelay: 1000  #Jikan has rate limits
     cacheExpiration: 3600000  # 1 hour in milliseconds
 
+rabbitmq:
+  exchange:
+    name: anime.exchange
+  queue:
+    name: anime.queue
+  routing:
+    key: anime.routing
+
 resilience4j:
   circuitbreaker:
     instances:
